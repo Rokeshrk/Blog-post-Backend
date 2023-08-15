@@ -1,16 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
+const users= require('../../models/User');
+const auth=require('../../middleware/Auth');
 
 const Post = require('../../models/Post');
 const checkObjectId = require('../../middleware/checkObjectId');
 
 //for new post
 router.post(
-  '/',
+  '/',auth,
   check('Title', 'Title is required').notEmpty(),
   check('Content', 'Content is required').notEmpty(),
-  check('Author', 'Author is required').notEmpty(),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -18,17 +19,19 @@ router.post(
     }
 
     try {
+      const user = await users.findById(req.user.id).select('-password');
+
       const {
         Title,
         Content,
-        Author,
               }=req.body;
         
 
       const newPost = new Post({
+        user: req.user.id,
         Title,
         Content,
-        Author,
+        Author:user.name,
       });
 
       const post = await newPost.save();
@@ -41,7 +44,7 @@ router.post(
   }
 );
 //for getting all the post by date which they are created
-router.get('/',  async (req, res) => {
+router.get('/',auth, async (req, res) => {
   try {
     const posts = await Post.find().sort({ date: -1 });
     res.json(posts);
@@ -53,7 +56,7 @@ router.get('/',  async (req, res) => {
 
 
 //to get a particular post by id
-router.get('/:id', checkObjectId('id'), async (req, res) => {
+router.get('/:id',auth, checkObjectId('id'), async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
@@ -71,7 +74,7 @@ router.get('/:id', checkObjectId('id'), async (req, res) => {
 
 
 //to delete a post by its id
-router.delete('/:id', [checkObjectId('id')], async (req, res) => {
+router.delete('/:id', [auth,checkObjectId('id')], async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
@@ -92,21 +95,21 @@ router.delete('/:id', [checkObjectId('id')], async (req, res) => {
 
 
 //to update a post
-router.put('/:id', checkObjectId('id'), async (req, res) => {
+router.put('/:id',auth, checkObjectId('id'), async (req, res) => {
   try {
     let post = await Post.findById(req.params.id);
+    const user = await users.findOne( req.user.id).select('-password');
 
     const {
       Title,
       Content,
-      Author,
             }=req.body;
       
     const UpdateAt = Date.now();
      post= {
       Title:Title,
       Content:Content,
-      Author:Author,
+      Author:user.name,
       UpdateAt,
     }
 

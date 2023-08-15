@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const auth = require('../../middleware/Auth');
+const bcrypt =require('bcryptjs');
 
 const{check, validationResult}=require('express-validator');
 
@@ -67,4 +69,4 @@ router.get('/', auth, async (req, res) => {
     }
   );
   
-  module.exports = router;
+module.exports = router;

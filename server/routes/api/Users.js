@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const{check, validationResult}= require('express-validator');
@@ -37,7 +37,7 @@ async(req,res)=>{
         const salt = await bcrypt.genSalt(10);
 
         user.password = await bcrypt.hash(password, salt);
-        await Users.save();
+        await user.save();
 
         const payload={
             user:{
@@ -48,7 +48,7 @@ async(req,res)=>{
         jwt.sign(
             payload,
             'jwtSecret',
-            {expriesIn:'5 days'},
+            { expiresIn:'5 days'},
             (err,token)=>{
                 if(err) throw err;
                 res.json({token});
@@ -63,4 +63,4 @@ async(req,res)=>{
 }
 );
 
-exports.module=router;
+module.exports = router;
